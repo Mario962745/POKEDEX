@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Pokédex Kanto & Guardería - Rojo Fuego</title>
+  
+  <!-- Configuración Web App nativa para iPhone / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pokédex Kanto">
+  <meta name="theme-color" content="#0b0e14">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #151921;
+      --card-hover: #1c222d;
+      --border: #262c36;
+      --accent: #ff3e3e;
+      --accent-glow: rgba(255, 62, 62, 0.3);
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --caught-bg: rgba(35, 134, 54, 0.15);
+      --caught-border: #2ea043;
+      --caught-glow: rgba(46, 160, 67, 0.4);
+      --input-bg: #11151c;
+      --daycare-gold: #e3b341;
+      --daycare-blue: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Encabezado Fijo */
+    header {
+      flex-shrink: 0;
+      background: rgba(11, 14, 20, 0.98);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 100;
+      padding: max(env(safe-area-inset-top), 12px) 14px 10px 14px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-rf {
+      background: linear-gradient(135deg, #ff3e3e, #ff8c00);
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 900;
+      padding: 3px 6px;
+      border-radius: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Barra de Pestañas (Tabs) */
+    .tab-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #181d26;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab.active {
+      background: #212836;
+      border-color: #58a6ff;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+    }
+
+    /* Vistas contenidas */
+    .view-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px 14px calc(env(safe-area-inset-bottom) + 30px) 14px;
+    }
+
+    .view-content.active {
+      display: block;
+    }
+
+    /* Componentes de la Pokédex */
+    .stats-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stats-numbers {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .progress-bar-bg {
+      background: #1f242d;
+      height: 7px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff3e3e, #f59e0b, #2ea043);
+      width: 0%;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-row {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .search-box {
+      width: 100%;
+      background: #1a1f29;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    .search-box:focus {
+      border-color: #58a6ff;
+    }
+
+    .filters-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      align-items: center;
+      scrollbar-width: none;
+    }
+    .filters-bar::-webkit-scrollbar { display: none; }
+
+    .filter-btn, .sort-select {
+      background: #1a1f29;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .confirm-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #1a1f29;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .confirm-toggle-btn.enabled {
+      background: rgba(88, 166, 255, 0.15);
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+
+    .zone-section {
+      margin-top: 12px;
+    }
+
+    .zone-header {
+      background: #181d26;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #58a6ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .zone-count {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .pokemon-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pokemon-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .pokemon-card:active {
+      background: var(--card-hover);
+    }
+
+    .pokemon-card.caught {
+      background: var(--caught-bg);
+      border-color: var(--caught-border);
+    }
+
+    .pk-info-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pk-num {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      min-width: 32px;
+    }
+
+    .pk-thumb {
+      width: 44px;
+      height: 44px;
+      image-rendering: pixelated;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .pk-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pk-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pk-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .type-badge {
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    /* Tipos */
+    .t-planta { background: #56b042; }
+    .t-veneno { background: #96429b; }
+    .t-fuego { background: #f06a2f; }
+    .t-agua { background: #3b88eb; }
+    .t-bicho { background: #94a323; }
+    .t-normal { background: #8f9281; }
+    .t-electrico { background: #e5b61f; color: #000; }
+    .t-tierra { background: #d0b05b; color: #000; }
+    .t-hada { background: #df80aa; }
+    .t-lucha { background: #b0382e; }
+    .t-psiquico { background: #ee497d; }
+    .t-roca { background: #a7943d; }
+    .t-fantasma { background: #615392; }
+    .t-hielo { background: #5bc4c5; color: #000; }
+    .t-dragon { background: #5c35db; }
+    .t-acero { background: #9595a8; }
+    .t-volador { background: #8978eb; }
+
+    .pk-subtext {
+      font-size: 0.7rem;
+      color: #e3b341;
+      font-weight: 500;
+    }
+
+    .pokeball-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #484f58;
+      position: relative;
+      background: #232832;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      flex-shrink: 0;
+    }
+
+    .pokemon-card.caught .pokeball-btn {
+      border-color: #2ea043;
+      background: radial-gradient(circle at 50% 35%, #ff3e3e 50%, #f0f6fc 51%);
+      transform: scale(1.08);
+      box-shadow: 0 0 10px var(--caught-glow);
+    }
+
+    .pokeball-btn::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    /* Componentes de la Calculadora de Guardería */
+    .calc-container {
+      max-width: 500px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .calc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #58a6ff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .selected-pk-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #11151c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .selected-pk-thumb {
+      width: 54px;
+      height: 54px;
+      image-rendering: pixelated;
+      object-fit: contain;
+    }
+
+    .selected-pk-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 0.92rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: #58a6ff;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .results-hero {
+      background: linear-gradient(145deg, #182234, #121824);
+      border: 1px solid #304260;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-stat {
+      text-align: center;
+      padding: 8px;
+    }
+
+    .hero-stat-value {
+      font-size: 2.1rem;
+      font-weight: 900;
+      color: #58a6ff;
+      line-height: 1;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-stat-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 10px;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .metric-lbl {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .warning-banner {
+      background: rgba(227, 179, 65, 0.12);
+      border: 1px solid rgba(227, 179, 65, 0.4);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 0.76rem;
+      color: #f3ca61;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.35;
+    }
+
+    /* Modal de Confirmación iOS */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #181d26;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 310px;
+      padding: 20px 16px 16px 16px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-thumb {
+      width: 68px;
+      height: 68px;
+      image-rendering: pixelated;
+      margin: 0 auto 6px auto;
+      display: block;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .modal-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    .modal-btn.cancel {
+      background: #252c38;
+      color: var(--text);
+    }
+
+    .modal-btn.confirm-catch {
+      background: #2ea043;
+      color: #fff;
+    }
+
+    .modal-btn.confirm-release {
+      background: #ff3e3e;
+      color: #fff;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: none;
+      color: #6e7681;
+      font-size: 0.72rem;
+      text-decoration: underline;
+      cursor: pointer;
+      margin: 20px 0 10px 0;
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+
+    .gear-btn { position: relative; background:#181d26; border:1px solid var(--border); color:#fff; width:36px; height:36px; border-radius:10px; font-size:1.05rem; cursor:pointer; }
+    .sync-dot { position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:#484f58; border:1.5px solid #0b0e14; }
+    .sync-dot.ok { background:#2ea043; } .sync-dot.busy { background:#e3b341; } .sync-dot.err { background:#ff3e3e; }
+    .sheet { max-height: 86dvh; overflow-y:auto; text-align:left; max-width: 380px; }
+    .sheet h2 { font-size:1.05rem; font-weight:800; margin-bottom:10px; text-align:center; }
+    .sheet h3 { font-size:0.82rem; font-weight:800; color:#58a6ff; margin:14px 0 6px; }
+    .sheet p { font-size:0.76rem; color:var(--text-muted); line-height:1.4; margin-bottom:8px; }
+    .sheet .code-box { user-select:text; -webkit-user-select:text; font-family: ui-monospace, Menlo, monospace; font-size:0.78rem; word-break:break-all; background:#11151c; border:1px solid var(--border); border-radius:9px; padding:9px 10px; margin-bottom:8px; color:#f0f6fc; }
+    .sheet input[type=text] { user-select:text; -webkit-user-select:text; }
+    .sheet .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+    .sheet .modal-btn { width:100%; }
+    .modal-btn.primary { background:#58a6ff; color:#06101e; }
+    .sync-status { font-size:0.74rem; color:var(--text-muted); text-align:center; margin-top:8px; min-height:1em; }
+  </style>
+</head>
+<body>
+
+  <header id="main-header">
+    <div class="title-row">
+      <h1>Pokédex Kanto <span class="badge-rf">Rojo Fuego</span></h1>
+      <button id="btn-settings" class="gear-btn" onclick="openSettings()" aria-label="Respaldo y sincronización">⚙️<span id="sync-dot" class="sync-dot"></span></button>
+    </div>
+
+    <!-- Selector de Pestañas Principal -->
+    <div class="tab-bar">
+      <div id="tab-pokedex" class="nav-tab active" onclick="switchTab('pokedex')">
+        <span>📖</span> Pokédex (1-151)
+      </div>
+      <div id="tab-daycare" class="nav-tab" onclick="switchTab('daycare')">
+        <span>🥚</span> Guardería & Pasos
+      </div>
+    </div>
+    
+    <!-- Controles que pertenecen a la pestaña Pokédex -->
+    <div id="header-pokedex-controls">
+      <div class="stats-card">
+        <div class="stats-numbers">
+          <span>Atrapados: <strong id="caught-count" style="color: #2ea043;">0</strong></span>
+          <span>Faltan: <strong id="remaining-count" style="color: #ff3e3e;">151</strong></span>
+          <span>Total: <strong>151</strong></span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progress-fill" class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <input type="text" id="search-input" class="search-box" placeholder="Buscar por nombre, número o tipo..." oninput="handleFilterAndSort()">
+        
+        <div class="filters-bar">
+          <button id="filter-all" class="filter-btn active" onclick="setFilter('all')">Todos</button>
+          <button id="filter-missing" class="filter-btn" onclick="setFilter('missing')">Faltantes</button>
+          <button id="filter-caught" class="filter-btn" onclick="setFilter('caught')">Atrapados</button>
+          <button id="confirm-toggle" class="confirm-toggle-btn enabled" onclick="toggleConfirmMode()">Confirmar: SÍ</button>
+          <select id="sort-select" class="sort-select" onchange="handleFilterAndSort()">
+            <option value="number">Orden: Número (#001-#151)</option>
+            <option value="story">Orden: Ruta / Historia</option>
+            <option value="name">Orden: Nombre (A-Z)</option>
+            <option value="type">Orden: Tipo Elemental</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PESTAÑA 1: LISTA POKÉDEX -->
+  <main id="view-pokedex" class="view-content active"></main>
+
+  <!-- PESTAÑA 2: CALCULADORA DE GUARDERÍA -->
+  <main id="view-daycare" class="view-content">
+    <div class="calc-container">
+      
+      <div class="calc-card">
+        <div class="card-title"><span>🔍</span> Seleccionar Pokémon</div>
+        
+        <div class="form-group">
+          <label for="calc-select-pk">Elige de la lista:</label>
+          <select id="calc-select-pk" class="form-select" onchange="onSelectPokemonChange()"></select>
+        </div>
+
+        <div class="selected-pk-preview" id="pk-preview-box">
+          <img id="calc-preview-img" class="selected-pk-thumb" src="" alt="">
+          <div class="selected-pk-info">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <strong id="calc-preview-name" style="font-size:1.05rem;"></strong>
+              <span id="calc-preview-types"></span>
+            </div>
+            <span id="calc-preview-curve" style="font-size:0.75rem; color:#58a6ff; font-weight:600;"></span>
+            <span id="calc-preview-note" style="font-size:0.72rem; color:var(--text-muted);"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-card">
+        <div class="card-title"><span>⚡</span> Datos de Experiencia y Nivel</div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="calc-cur-level">Nivel Actual:</label>
+            <input type="number" id="calc-cur-level" class="form-input" min="1" max="99" value="18" oninput="onCurrentLevelChanged()">
+          </div>
+
+          <div class="form-group">
+            <label for="calc-target-level">Nivel Deseado:</label>
+            <input type="number" id="calc-target-level" class="form-input" min="2" max="100" value="20" oninput="calculateDayCare()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="calc-pts-remaining" id="lbl-pts-remaining">Puntos que le faltan para el sig. nivel:</label>
+          <input type="number" id="calc-pts-remaining" class="form-input" min="0" placeholder="Ej: 10" oninput="calculateDayCare()">
+          <small style="color:var(--text-muted); font-size:0.7rem; margin-top:2px;" id="calc-help-text">
+            Si está recién subido de nivel, déjalo con el valor por defecto.
+          </small>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Resultados -->
+      <div class="results-hero">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="res-steps">0</div>
+          <div class="hero-stat-label">Pasos necesarios en la Guardería (o Puntos Exp)</div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-box">
+            <div class="metric-val" id="res-cost">0 ₽</div>
+            <div class="metric-lbl">Coste en Guardería</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" id="res-levels-gained">+0 Nv.</div>
+            <div class="metric-lbl">Niveles a subir</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" id="res-time-bike">0 min</div>
+            <div class="metric-lbl">Tiempo en Bici (~8.6 p/s)</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" id="res-time-walk">0 min</div>
+            <div class="metric-lbl">Tiempo a pie (~4.3 p/s)</div>
+          </div>
+        </div>
+
+        <div id="res-evolution-warning" class="warning-banner" style="display:none;"></div>
+
+        <div class="warning-banner" style="background:rgba(88,166,255,0.1); border-color:#304260; color:#8ab8f8;">
+          <span>ℹ️</span>
+          <span><strong>Recordatorio Guardería Kanto (Ruta 5):</strong> 1 paso = 1 punto de Exp. Al retirarlo, si debió evolucionar, debes subirle 1 nivel combatiendo. Cuidado: si aprende movimientos nuevos, sobrescribirá el primer ataque de su lista.</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal de confirmación para capturas -->
+  <div id="confirm-modal" class="modal-overlay">
+    <div class="modal-box">
+      <img id="m-thumb" class="modal-thumb" src="" alt="">
+      <div id="m-title" class="modal-title"></div>
+      <div id="m-desc" class="modal-desc"></div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
+        <button id="m-confirm-btn" class="modal-btn" onclick="executeConfirmedAction()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Ajustes: respaldo y sincronización -->
+  <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this)closeSettings()">
+    <div class="modal-box sheet">
+      <h2>⚙️ Respaldo y sincronización</h2>
+
+      <h3>🔄 Sincronizar entre dispositivos</h3>
+      <div id="sync-off">
+        <p>Activa la sincronización para ver los mismos Pokémon atrapados en tu iPhone, iPad y donde la instales. Se crea un código secreto: úsalo en cada dispositivo.</p>
+        <div class="row">
+          <button class="modal-btn primary" onclick="createSyncCode()">Crear código nuevo</button>
+          <button class="modal-btn cancel" onclick="document.getElementById('join-box').style.display='block'">Ya tengo uno</button>
+        </div>
+        <div id="join-box" style="display:none; margin-top:8px;">
+          <input id="join-code" type="text" class="form-input" placeholder="Pega aquí tu código" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <button class="modal-btn primary" style="margin-top:8px;" onclick="joinSyncCode()">Conectar</button>
+        </div>
+      </div>
+      <div id="sync-on" style="display:none;">
+        <p>Sincronización activa. Para conectar otro dispositivo, abre esta app allá y elige "Ya tengo uno" con este código. Guárdalo: quien lo tenga puede ver y cambiar tu progreso.</p>
+        <div id="sync-code-show" class="code-box"></div>
+        <div class="row">
+          <button class="modal-btn primary" onclick="syncNow(true)">Sincronizar ahora</button>
+          <button class="modal-btn cancel" onclick="copySyncCode()">Copiar código</button>
+        </div>
+        <button class="modal-btn cancel" style="margin-top:8px;" onclick="disableSync()">Desactivar en este dispositivo</button>
+      </div>
+      <div id="sync-status" class="sync-status"></div>
+
+      <h3>💾 Respaldo manual</h3>
+      <p>Descarga un archivo con tu progreso o restáuralo desde uno.</p>
+      <div class="row">
+        <button class="modal-btn cancel" onclick="exportBackup()">Exportar</button>
+        <button class="modal-btn cancel" onclick="document.getElementById('import-file').click()">Importar</button>
+      </div>
+      <input id="import-file" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+
+      <button class="modal-btn cancel" style="margin-top:16px;" onclick="closeSettings()">Cerrar</button>
+    </div>
+  </div>
+
+  <script src="sprites.js"></script>
+  <script>
+    // Base de datos de los 151 Pokémon con tipos, notas y curva de experiencia oficial Gen III
+    const allUniquePokemon = [{"id": 1, "name": "Bulbasaur", "types": ["planta", "veneno"], "note": "Inicial (Laboratorio Oak)", "growth": "medium_slow"}, {"id": 2, "name": "Ivysaur", "types": ["planta", "veneno"], "note": "Evolución de Bulbasaur al Nivel 16", "growth": "medium_slow"}, {"id": 3, "name": "Venusaur", "types": ["planta", "veneno"], "note": "Evolución de Ivysaur al Nivel 32", "growth": "medium_slow"}, {"id": 4, "name": "Charmander", "types": ["fuego"], "note": "Inicial (Laboratorio Oak)", "growth": "medium_slow"}, {"id": 5, "name": "Charmeleon", "types": ["fuego"], "note": "Evolución de Charmander al Nivel 16", "growth": "medium_slow"}, {"id": 6, "name": "Charizard", "types": ["fuego", "volador"], "note": "Evolución de Charmeleon al Nivel 36", "growth": "medium_slow"}, {"id": 7, "name": "Squirtle", "types": ["agua"], "note": "Inicial (Laboratorio Oak)", "growth": "medium_slow"}, {"id": 8, "name": "Wartortle", "types": ["agua"], "note": "Evolución de Squirtle al Nivel 16", "growth": "medium_slow"}, {"id": 9, "name": "Blastoise", "types": ["agua"], "note": "Evolución de Wartortle al Nivel 36", "growth": "medium_slow"}, {"id": 10, "name": "Caterpie", "types": ["bicho"], "note": "Bosque Verde / Rutas 2, 24", "growth": "medium_fast"}, {"id": 11, "name": "Metapod", "types": ["bicho"], "note": "Evolución Nv. 7 / Bosque Verde", "growth": "medium_fast"}, {"id": 12, "name": "Butterfree", "types": ["bicho", "volador"], "note": "Evolución de Metapod al Nivel 10", "growth": "medium_fast"}, {"id": 13, "name": "Weedle", "types": ["bicho", "veneno"], "note": "Bosque Verde / Rutas 2, 24", "growth": "medium_fast"}, {"id": 14, "name": "Kakuna", "types": ["bicho", "veneno"], "note": "Evolución Nv. 7 / Bosque Verde", "growth": "medium_fast"}, {"id": 15, "name": "Beedrill", "types": ["bicho", "veneno"], "note": "Evolución de Kakuna al Nivel 10", "growth": "medium_fast"}, {"id": 16, "name": "Pidgey", "types": ["normal", "volador"], "note": "Rutas 1, 2, 3, 5, etc.", "growth": "medium_slow"}, {"id": 17, "name": "Pidgeotto", "types": ["normal", "volador"], "note": "Evolución Nv. 18 / Rutas 14, 15", "growth": "medium_slow"}, {"id": 18, "name": "Pidgeot", "types": ["normal", "volador"], "note": "Evolución de Pidgeotto al Nivel 36", "growth": "medium_slow"}, {"id": 19, "name": "Rattata", "types": ["normal"], "note": "Rutas 1, 2, 4, 9, etc.", "growth": "medium_fast"}, {"id": 20, "name": "Raticate", "types": ["normal"], "note": "Evolución Nv. 20 / Rutas 16, 17, 18", "growth": "medium_fast"}, {"id": 21, "name": "Spearow", "types": ["normal", "volador"], "note": "Rutas 3, 4, 9, 10, etc.", "growth": "medium_fast"}, {"id": 22, "name": "Fearow", "types": ["normal", "volador"], "note": "Evolución Nv. 20 / Rutas 17, 18, 23", "growth": "medium_fast"}, {"id": 23, "name": "Ekans", "types": ["veneno"], "note": "Exclusivo Rojo Fuego (Rutas 4, 8, 9, 11)", "growth": "medium_fast"}, {"id": 24, "name": "Arbok", "types": ["veneno"], "note": "Evolución de Ekans al Nivel 22", "growth": "medium_fast"}, {"id": 25, "name": "Pikachu", "types": ["electrico"], "note": "Bosque Verde / Central Energía", "growth": "medium_fast"}, {"id": 26, "name": "Raichu", "types": ["electrico"], "note": "Evolución con Piedra Trueno", "growth": "medium_fast"}, {"id": 27, "name": "Sandshrew", "types": ["tierra"], "note": "Exclusivo Verde Hoja (Intercambio)", "growth": "medium_fast"}, {"id": 28, "name": "Sandslash", "types": ["tierra"], "note": "Evolución de Sandshrew al Nivel 22", "growth": "medium_fast"}, {"id": 29, "name": "Nidoran♀", "types": ["veneno"], "note": "30% en Ruta 22 (Rojo Fuego) / Safari", "growth": "medium_slow"}, {"id": 30, "name": "Nidorina", "types": ["veneno"], "note": "Evolución Nv. 16 / Zona Safari", "growth": "medium_slow"}, {"id": 31, "name": "Nidoqueen", "types": ["veneno", "tierra"], "note": "Evolución con Piedra Lunar", "growth": "medium_slow"}, {"id": 32, "name": "Nidoran♂", "types": ["veneno"], "note": "1% en Ruta 22 (Rojo Fuego) / Safari", "growth": "medium_slow"}, {"id": 33, "name": "Nidorino", "types": ["veneno"], "note": "Evolución Nv. 16 / Zona Safari", "growth": "medium_slow"}, {"id": 34, "name": "Nidoking", "types": ["veneno", "tierra"], "note": "Evolución con Piedra Lunar", "growth": "medium_slow"}, {"id": 35, "name": "Clefairy", "types": ["hada"], "note": "Mt. Moon / Casino de Azulona", "growth": "fast"}, {"id": 36, "name": "Clefable", "types": ["hada"], "note": "Evolución con Piedra Lunar", "growth": "fast"}, {"id": 37, "name": "Vulpix", "types": ["fuego"], "note": "Exclusivo Verde Hoja (Intercambio)", "growth": "medium_fast"}, {"id": 38, "name": "Ninetales", "types": ["fuego"], "note": "Evolución con Piedra Fuego", "growth": "medium_fast"}, {"id": 39, "name": "Jigglypuff", "types": ["normal", "hada"], "note": "Ruta 3", "growth": "fast"}, {"id": 40, "name": "Wigglytuff", "types": ["normal", "hada"], "note": "Evolución con Piedra Lunar", "growth": "fast"}, {"id": 41, "name": "Zubat", "types": ["veneno", "volador"], "note": "Mt. Moon / Cueva Celeste / Túnel Roca", "growth": "medium_fast"}, {"id": 42, "name": "Golbat", "types": ["veneno", "volador"], "note": "Evolución Nv. 22 / Islas Espuma", "growth": "medium_fast"}, {"id": 43, "name": "Oddish", "types": ["planta", "veneno"], "note": "Exclusivo Rojo Fuego (Rutas 5, 6, 7, 24)", "growth": "medium_slow"}, {"id": 44, "name": "Gloom", "types": ["planta", "veneno"], "note": "Evolución Nv. 21 / Rutas 12, 13, 14", "growth": "medium_slow"}, {"id": 45, "name": "Vileplume", "types": ["planta", "veneno"], "note": "Evolución con Piedra Hoja", "growth": "medium_slow"}, {"id": 46, "name": "Paras", "types": ["bicho", "planta"], "note": "Mt. Moon / Zona Safari", "growth": "medium_fast"}, {"id": 47, "name": "Parasect", "types": ["bicho", "planta"], "note": "Evolución Nv. 24 / Zona Safari", "growth": "medium_fast"}, {"id": 48, "name": "Venonat", "types": ["bicho", "veneno"], "note": "Rutas 12, 13, 14, 15 / Safari", "growth": "medium_fast"}, {"id": 49, "name": "Venomoth", "types": ["bicho", "veneno"], "note": "Evolución Nv. 31 / Zona Safari", "growth": "medium_fast"}, {"id": 50, "name": "Diglett", "types": ["tierra"], "note": "Cueva Diglett", "growth": "medium_fast"}, {"id": 51, "name": "Dugtrio", "types": ["tierra"], "note": "Cueva Diglett (Truco Repelente nv. 29-31)", "growth": "medium_fast"}, {"id": 52, "name": "Meowth", "types": ["normal"], "note": "Rutas 5, 6, 7, 8", "growth": "medium_fast"}, {"id": 53, "name": "Persian", "types": ["normal"], "note": "Evolución de Meowth al Nivel 28", "growth": "medium_fast"}, {"id": 54, "name": "Psyduck", "types": ["agua"], "note": "Exclusivo Rojo Fuego (Surf/Pesca)", "growth": "medium_fast"}, {"id": 55, "name": "Golduck", "types": ["agua"], "note": "Evolución Nv. 33 / Islas Espuma", "growth": "medium_fast"}, {"id": 56, "name": "Mankey", "types": ["lucha"], "note": "Rutas 3, 4, 22, 23", "growth": "medium_fast"}, {"id": 57, "name": "Primeape", "types": ["lucha"], "note": "Evolución Nv. 28 / Ruta 23", "growth": "medium_fast"}, {"id": 58, "name": "Growlithe", "types": ["fuego"], "note": "Exclusivo Rojo Fuego (Rutas 7, 8)", "growth": "slow"}, {"id": 59, "name": "Arcanine", "types": ["fuego"], "note": "Evolución con Piedra Fuego", "growth": "slow"}, {"id": 60, "name": "Poliwag", "types": ["agua"], "note": "Pesca en Rutas 6, 22, 25", "growth": "medium_slow"}, {"id": 61, "name": "Poliwhirl", "types": ["agua"], "note": "Evolución Nv. 25 / Pesca", "growth": "medium_slow"}, {"id": 62, "name": "Poliwrath", "types": ["agua", "lucha"], "note": "Evolución con Piedra Agua", "growth": "medium_slow"}, {"id": 63, "name": "Abra", "types": ["psiquico"], "note": "Rutas 24, 25 / Casino Azulona", "growth": "medium_fast"}, {"id": 64, "name": "Kadabra", "types": ["psiquico"], "note": "Evolución de Abra al Nivel 16", "growth": "medium_fast"}, {"id": 65, "name": "Alakazam", "types": ["psiquico"], "note": "Evolución por Intercambio", "growth": "medium_fast"}, {"id": 66, "name": "Machop", "types": ["lucha"], "note": "Túnel Roca / Calle Victoria", "growth": "medium_slow"}, {"id": 67, "name": "Machoke", "types": ["lucha"], "note": "Evolución Nv. 28 / Calle Victoria", "growth": "medium_slow"}, {"id": 68, "name": "Machamp", "types": ["lucha"], "note": "Evolución por Intercambio", "growth": "medium_slow"}, {"id": 69, "name": "Bellsprout", "types": ["planta", "veneno"], "note": "Exclusivo Verde Hoja (Intercambio)", "growth": "medium_fast"}, {"id": 70, "name": "Weepinbell", "types": ["planta", "veneno"], "note": "Evolución de Bellsprout al Nivel 21", "growth": "medium_fast"}, {"id": 71, "name": "Victreebel", "types": ["planta", "veneno"], "note": "Evolución con Piedra Hoja", "growth": "medium_fast"}, {"id": 72, "name": "Tentacool", "types": ["agua", "veneno"], "note": "Haciendo Surf en rutas marítimas", "growth": "medium_fast"}, {"id": 73, "name": "Tentacruel", "types": ["agua", "veneno"], "note": "Evolución Nv. 30 / Surf", "growth": "medium_fast"}, {"id": 74, "name": "Geodude", "types": ["roca", "tierra"], "note": "Mt. Moon / Túnel Roca", "growth": "medium_slow"}, {"id": 75, "name": "Graveler", "types": ["roca", "tierra"], "note": "Evolución Nv. 25 / Calle Victoria", "growth": "medium_slow"}, {"id": 76, "name": "Golem", "types": ["roca", "tierra"], "note": "Evolución por Intercambio", "growth": "medium_slow"}, {"id": 77, "name": "Ponyta", "types": ["fuego"], "note": "Camino Candente / Monte Ascuas", "growth": "medium_fast"}, {"id": 78, "name": "Rapidash", "types": ["fuego"], "note": "Evolución de Ponyta al Nivel 40", "growth": "medium_fast"}, {"id": 79, "name": "Slowpoke", "types": ["agua", "psiquico"], "note": "Exclusivo Verde Hoja (Intercambio)", "growth": "medium_slow"}, {"id": 80, "name": "Slowbro", "types": ["agua", "psiquico"], "note": "Evolución de Slowpoke al Nivel 37", "growth": "medium_slow"}, {"id": 81, "name": "Magnemite", "types": ["electrico", "acero"], "note": "Central de Energía", "growth": "medium_slow"}, {"id": 82, "name": "Magneton", "types": ["electrico", "acero"], "note": "Evolución Nv. 30 / Central de Energía", "growth": "medium_slow"}, {"id": 83, "name": "Farfetch'd", "types": ["normal", "volador"], "note": "Intercambio por Spearow en Ciudad Carmín", "growth": "medium_fast"}, {"id": 84, "name": "Doduo", "types": ["normal", "volador"], "note": "Rutas 16, 17, 18 / Zona Safari", "growth": "medium_fast"}, {"id": 85, "name": "Dodrio", "types": ["normal", "volador"], "note": "Evolución de Doduo al Nivel 31", "growth": "medium_fast"}, {"id": 86, "name": "Seel", "types": ["agua"], "note": "Islas Espuma", "growth": "medium_fast"}, {"id": 87, "name": "Dewgong", "types": ["agua", "hielo"], "note": "Evolución de Seel al Nivel 34", "growth": "medium_fast"}, {"id": 88, "name": "Grimer", "types": ["veneno"], "note": "Mansión Pokémon (Isla Canela)", "growth": "medium_fast"}, {"id": 89, "name": "Muk", "types": ["veneno"], "note": "Evolución Nv. 38 / Mansión Pokémon", "growth": "medium_fast"}, {"id": 90, "name": "Shellder", "types": ["agua"], "note": "Exclusivo Rojo Fuego (Supercaña)", "growth": "medium_fast"}, {"id": 91, "name": "Cloyster", "types": ["agua", "hielo"], "note": "Evolución con Piedra Agua", "growth": "medium_fast"}, {"id": 92, "name": "Gastly", "types": ["fantasma", "veneno"], "note": "Torre Pokémon (Pueblo Lavanda)", "growth": "medium_slow"}, {"id": 93, "name": "Haunter", "types": ["fantasma", "veneno"], "note": "Evolución Nv. 25 / Torre Pokémon", "growth": "medium_slow"}, {"id": 94, "name": "Gengar", "types": ["fantasma", "veneno"], "note": "Evolución por Intercambio", "growth": "medium_slow"}, {"id": 95, "name": "Onix", "types": ["roca", "tierra"], "note": "Túnel Roca / Calle Victoria", "growth": "medium_slow"}, {"id": 96, "name": "Drowzee", "types": ["psiquico"], "note": "Ruta 11", "growth": "medium_fast"}, {"id": 97, "name": "Hypno", "types": ["psiquico"], "note": "Evolución de Drowzee al Nivel 26", "growth": "medium_fast"}, {"id": 98, "name": "Krabby", "types": ["agua"], "note": "Pesca con Caña Buena en varias rutas", "growth": "medium_fast"}, {"id": 99, "name": "Kingler", "types": ["agua"], "note": "Evolución de Krabby al Nivel 28", "growth": "medium_fast"}, {"id": 100, "name": "Voltorb", "types": ["electrico"], "note": "Ruta 10 / Central de Energía", "growth": "medium_fast"}, {"id": 101, "name": "Electrode", "types": ["electrico"], "note": "Evolución Nv. 30 / Central de Energía", "growth": "medium_fast"}, {"id": 102, "name": "Exeggcute", "types": ["planta", "psiquico"], "note": "Zona Safari", "growth": "slow"}, {"id": 103, "name": "Exeggutor", "types": ["planta", "psiquico"], "note": "Evolución con Piedra Hoja", "growth": "slow"}, {"id": 104, "name": "Cubone", "types": ["tierra"], "note": "Torre Pokémon (Pueblo Lavanda)", "growth": "medium_slow"}, {"id": 105, "name": "Marowak", "types": ["tierra"], "note": "Evolución de Cubone al Nivel 28", "growth": "medium_slow"}, {"id": 106, "name": "Hitmonlee", "types": ["lucha"], "note": "Dojo Kárate (Elegir 1)", "growth": "medium_fast"}, {"id": 107, "name": "Hitmonchan", "types": ["lucha"], "note": "Dojo Kárate (Elegir 1)", "growth": "medium_fast"}, {"id": 108, "name": "Lickitung", "types": ["normal"], "note": "Intercambio por Golduck en Ruta 18", "growth": "medium_fast"}, {"id": 109, "name": "Koffing", "types": ["veneno"], "note": "Mansión Pokémon (Isla Canela)", "growth": "medium_fast"}, {"id": 110, "name": "Weezing", "types": ["veneno"], "note": "Evolución Nv. 35 / Mansión Pokémon", "growth": "medium_fast"}, {"id": 111, "name": "Rhyhorn", "types": ["tierra", "roca"], "note": "Zona Safari", "growth": "medium_slow"}, {"id": 112, "name": "Rhydon", "types": ["tierra", "roca"], "note": "Evolución de Rhyhorn al Nivel 42", "growth": "medium_slow"}, {"id": 113, "name": "Chansey", "types": ["normal"], "note": "Zona Safari (Raro)", "growth": "fast"}, {"id": 114, "name": "Tangela", "types": ["planta"], "note": "Ruta 21 (Sur de Pueblo Paleta)", "growth": "medium_fast"}, {"id": 115, "name": "Kangaskhan", "types": ["normal"], "note": "Zona Safari (Raro)", "growth": "medium_fast"}, {"id": 116, "name": "Horsea", "types": ["agua"], "note": "Rutas 19, 20, 21 / Pesca", "growth": "medium_fast"}, {"id": 117, "name": "Seadra", "types": ["agua"], "note": "Evolución Nv. 32 / Pesca", "growth": "medium_fast"}, {"id": 118, "name": "Goldeen", "types": ["agua"], "note": "Pesca con Caña Buena en ríos/estanques", "growth": "medium_fast"}, {"id": 119, "name": "Seaking", "types": ["agua"], "note": "Evolución de Goldeen al Nivel 33", "growth": "medium_fast"}, {"id": 120, "name": "Staryu", "types": ["agua"], "note": "Pesca en varias rutas", "growth": "medium_fast"}, {"id": 121, "name": "Starmie", "types": ["agua", "psiquico"], "note": "Evolución con Piedra Agua", "growth": "medium_fast"}, {"id": 122, "name": "Mr. Mime", "types": ["psiquico", "hada"], "note": "Intercambio por Abra en caseta Ruta 2", "growth": "medium_fast"}, {"id": 123, "name": "Scyther", "types": ["bicho", "volador"], "note": "Exclusivo Rojo Fuego (Casino Azulona / Safari)", "growth": "medium_fast"}, {"id": 124, "name": "Jynx", "types": ["hielo", "psiquico"], "note": "Intercambio por Poliwhirl en Ciudad Celeste", "growth": "medium_fast"}, {"id": 125, "name": "Electabuzz", "types": ["electrico"], "note": "Exclusivo Rojo Fuego (Central de Energía)", "growth": "medium_fast"}, {"id": 126, "name": "Magmar", "types": ["fuego"], "note": "Exclusivo Verde Hoja (Intercambio)", "growth": "medium_fast"}, {"id": 127, "name": "Pinsir", "types": ["bicho"], "note": "Zona Safari / Casino Azulona", "growth": "medium_fast"}, {"id": 128, "name": "Tauros", "types": ["normal"], "note": "Zona Safari (Raro)", "growth": "medium_fast"}, {"id": 129, "name": "Magikarp", "types": ["agua"], "note": "Pesca con Caña Vieja / Venta por 500₱", "growth": "slow"}, {"id": 130, "name": "Gyarados", "types": ["agua", "volador"], "note": "Evolución de Magikarp al Nivel 20", "growth": "slow"}, {"id": 131, "name": "Lapras", "types": ["agua", "hielo"], "note": "Regalo en Silph S.A. (Piso 7)", "growth": "slow"}, {"id": 132, "name": "Ditto", "types": ["normal"], "note": "Rutas 13, 14, 15 / Cueva Celeste", "growth": "medium_fast"}, {"id": 133, "name": "Eevee", "types": ["normal"], "note": "Regalo en Mansión de Ciudad Azulona", "growth": "slow"}, {"id": 134, "name": "Vaporeon", "types": ["agua"], "note": "Evolución de Eevee con Piedra Agua", "growth": "slow"}, {"id": 135, "name": "Jolteon", "types": ["electrico"], "note": "Evolución de Eevee con Piedra Trueno", "growth": "slow"}, {"id": 136, "name": "Flareon", "types": ["fuego"], "note": "Evolución de Eevee con Piedra Fuego", "growth": "slow"}, {"id": 137, "name": "Porygon", "types": ["normal"], "note": "Premios en Casino de Ciudad Azulona", "growth": "medium_fast"}, {"id": 138, "name": "Omanyte", "types": ["roca", "agua"], "note": "Revivir Fósil Hélix en Isla Canela", "growth": "slow"}, {"id": 139, "name": "Omastar", "types": ["roca", "agua"], "note": "Evolución de Omanyte al Nivel 40", "growth": "slow"}, {"id": 140, "name": "Kabuto", "types": ["roca", "agua"], "note": "Revivir Fósil Domo en Isla Canela", "growth": "slow"}, {"id": 141, "name": "Kabutops", "types": ["roca", "agua"], "note": "Evolución de Kabuto al Nivel 40", "growth": "slow"}, {"id": 142, "name": "Aerodactyl", "types": ["roca", "volador"], "note": "Revivir Ámbar Viejo en Isla Canela", "growth": "slow"}, {"id": 143, "name": "Snorlax", "types": ["normal"], "note": "Despertar con Poké Flauta en Rutas 12 y 16", "growth": "slow"}, {"id": 144, "name": "Articuno", "types": ["hielo", "volador"], "note": "Islas Espuma (Fondo de la cueva)", "growth": "slow"}, {"id": 145, "name": "Zapdos", "types": ["electrico", "volador"], "note": "Central de Energía", "growth": "slow"}, {"id": 146, "name": "Moltres", "types": ["fuego", "volador"], "note": "Cima del Monte Ascuas (Isla Prima)", "growth": "slow"}, {"id": 147, "name": "Dratini", "types": ["dragon"], "note": "Pesca en Zona Safari / Casino Azulona", "growth": "slow"}, {"id": 148, "name": "Dragonair", "types": ["dragon"], "note": "Evolución Nv. 30 / Pesca en Safari", "growth": "slow"}, {"id": 149, "name": "Dragonite", "types": ["dragon", "volador"], "note": "Evolución de Dragonair al Nivel 55", "growth": "slow"}, {"id": 150, "name": "Mewtwo", "types": ["psiquico"], "note": "Cueva Celeste (Post-Liga Pokémon)", "growth": "slow"}, {"id": 151, "name": "Mew", "types": ["psiquico"], "note": "Evento especial / Exclusivo", "growth": "slow"}];
+
+    // Zonas de historia
+    const zonesData = [
+      {
+        zone: "1. Pueblo Paleta (Iniciales y Evoluciones)",
+        pokemon: [
+          allUniquePokemon[0], allUniquePokemon[1], allUniquePokemon[2],
+          allUniquePokemon[3], allUniquePokemon[4], allUniquePokemon[5],
+          allUniquePokemon[6], allUniquePokemon[7], allUniquePokemon[8]
+        ]
+      },
+      {
+        zone: "2. Ruta 1",
+        pokemon: [
+          allUniquePokemon[15], allUniquePokemon[16], allUniquePokemon[17],
+          allUniquePokemon[18], allUniquePokemon[19]
+        ]
+      },
+      {
+        zone: "3. Ruta 22 (Oeste de Ciudad Verde)",
+        pokemon: [
+          allUniquePokemon[28], allUniquePokemon[29], allUniquePokemon[30],
+          allUniquePokemon[31], allUniquePokemon[32], allUniquePokemon[33],
+          allUniquePokemon[55], allUniquePokemon[56]
+        ]
+      },
+      {
+        zone: "4. Bosque Verde & Ruta 2",
+        pokemon: [
+          allUniquePokemon[9], allUniquePokemon[10], allUniquePokemon[11],
+          allUniquePokemon[12], allUniquePokemon[13], allUniquePokemon[14],
+          allUniquePokemon[24], allUniquePokemon[25]
+        ]
+      },
+      {
+        zone: "5. Ruta 3",
+        pokemon: [
+          allUniquePokemon[20], allUniquePokemon[21],
+          allUniquePokemon[38], allUniquePokemon[39],
+          allUniquePokemon[128], allUniquePokemon[129]
+        ]
+      },
+      {
+        zone: "6. Mt. Moon (Cueva)",
+        pokemon: [
+          allUniquePokemon[40], allUniquePokemon[41],
+          allUniquePokemon[73], allUniquePokemon[74], allUniquePokemon[75],
+          allUniquePokemon[45], allUniquePokemon[46],
+          allUniquePokemon[34], allUniquePokemon[35]
+        ]
+      },
+      {
+        zone: "7. Rutas 4 y 24 (Puente Celeste)",
+        pokemon: [
+          allUniquePokemon[22], allUniquePokemon[23],
+          allUniquePokemon[62], allUniquePokemon[63], allUniquePokemon[64]
+        ]
+      },
+      {
+        zone: "8. Rutas 5 y 6 (Camino a Carmín)",
+        pokemon: [
+          allUniquePokemon[42], allUniquePokemon[43], allUniquePokemon[44],
+          allUniquePokemon[51], allUniquePokemon[52]
+        ]
+      },
+      {
+        zone: "9. Cueva Diglett & Intercambios Carmín",
+        pokemon: [
+          allUniquePokemon[49], allUniquePokemon[50],
+          allUniquePokemon[82], allUniquePokemon[121]
+        ]
+      },
+      {
+        zone: "10. Ruta 11 (Este de Carmín)",
+        pokemon: [allUniquePokemon[95], allUniquePokemon[96]]
+      },
+      {
+        zone: "11. Túnel Roca (Camino a Lavanda)",
+        pokemon: [
+          allUniquePokemon[65], allUniquePokemon[66], allUniquePokemon[67],
+          allUniquePokemon[94]
+        ]
+      },
+      {
+        zone: "12. Ruta 8 & Ciudad Azulona",
+        pokemon: [
+          allUniquePokemon[57], allUniquePokemon[58],
+          allUniquePokemon[132], allUniquePokemon[133], allUniquePokemon[134], allUniquePokemon[135],
+          allUniquePokemon[122], allUniquePokemon[136],
+          allUniquePokemon[146], allUniquePokemon[147], allUniquePokemon[148]
+        ]
+      },
+      {
+        zone: "13. Torre Pokémon (Pueblo Lavanda)",
+        pokemon: [
+          allUniquePokemon[91], allUniquePokemon[92], allUniquePokemon[93],
+          allUniquePokemon[103], allUniquePokemon[104]
+        ]
+      },
+      {
+        zone: "14. Eventos de Historia y Silph S.A.",
+        pokemon: [
+          allUniquePokemon[142], allUniquePokemon[105],
+          allUniquePokemon[106], allUniquePokemon[130]
+        ]
+      },
+      {
+        zone: "15. Rutas de Agua, Pesca y Surf",
+        pokemon: [
+          allUniquePokemon[59], allUniquePokemon[60], allUniquePokemon[61],
+          allUniquePokemon[53], allUniquePokemon[54],
+          allUniquePokemon[71], allUniquePokemon[72],
+          allUniquePokemon[85], allUniquePokemon[86],
+          allUniquePokemon[89], allUniquePokemon[90],
+          allUniquePokemon[97], allUniquePokemon[98],
+          allUniquePokemon[115], allUniquePokemon[116],
+          allUniquePokemon[117], allUniquePokemon[118],
+          allUniquePokemon[119], allUniquePokemon[120]
+        ]
+      },
+      {
+        zone: "16. Rutas Centrales y Zona Safari (Ciudad Fucsia)",
+        pokemon: [
+          allUniquePokemon[47], allUniquePokemon[48],
+          allUniquePokemon[83], allUniquePokemon[84],
+          allUniquePokemon[101], allUniquePokemon[102],
+          allUniquePokemon[110], allUniquePokemon[111],
+          allUniquePokemon[112], allUniquePokemon[113],
+          allUniquePokemon[114], allUniquePokemon[126],
+          allUniquePokemon[127], allUniquePokemon[131]
+        ]
+      },
+      {
+        zone: "17. Fósiles, Mansión & Central de Energía",
+        pokemon: [
+          allUniquePokemon[137], allUniquePokemon[138],
+          allUniquePokemon[139], allUniquePokemon[140], allUniquePokemon[141],
+          allUniquePokemon[80], allUniquePokemon[81],
+          allUniquePokemon[99], allUniquePokemon[100], allUniquePokemon[124],
+          allUniquePokemon[87], allUniquePokemon[88],
+          allUniquePokemon[108], allUniquePokemon[109],
+          allUniquePokemon[76], allUniquePokemon[77]
+        ]
+      },
+      {
+        zone: "18. Exclusivos de Intercambio (NPCs / Verde Hoja)",
+        pokemon: [
+          allUniquePokemon[26], allUniquePokemon[27],
+          allUniquePokemon[36], allUniquePokemon[37],
+          allUniquePokemon[68], allUniquePokemon[69], allUniquePokemon[70],
+          allUniquePokemon[78], allUniquePokemon[79],
+          allUniquePokemon[107], allUniquePokemon[123], allUniquePokemon[125]
+        ]
+      },
+      {
+        zone: "19. Legendarios y Míticos",
+        pokemon: [
+          allUniquePokemon[143], allUniquePokemon[144],
+          allUniquePokemon[145], allUniquePokemon[149], allUniquePokemon[150]
+        ]
+      }
+    ];
+
+    // Persistencia y estado
+    let caughtSet = new Set(JSON.parse(localStorage.getItem('pkmn_caught_rf_ids') || '[]'));
+    let currentFilter = 'all';
+    let requireConfirm = localStorage.getItem('pkmn_require_confirm') !== 'false';
+    let activeTab = localStorage.getItem('pkmn_active_tab') || 'pokedex';
+
+    let pendingId = null;
+    let pendingAction = null;
+
+    let touchStartY = 0;
+    let isDragging = false;
+
+    // --- CAMBIO DE PESTAÑAS ---
+    function switchTab(tab) {
+      activeTab = tab;
+      localStorage.setItem('pkmn_active_tab', tab);
+
+      const tabPokedex = document.getElementById('tab-pokedex');
+      const tabDaycare = document.getElementById('tab-daycare');
+      const viewPokedex = document.getElementById('view-pokedex');
+      const viewDaycare = document.getElementById('view-daycare');
+      const headerControls = document.getElementById('header-pokedex-controls');
+
+      if (tab === 'pokedex') {
+        tabPokedex.classList.add('active');
+        tabDaycare.classList.remove('active');
+        viewPokedex.classList.add('active');
+        viewDaycare.classList.remove('active');
+        headerControls.style.display = 'block';
+      } else {
+        tabDaycare.classList.add('active');
+        tabPokedex.classList.remove('active');
+        viewDaycare.classList.add('active');
+        viewPokedex.classList.remove('active');
+        headerControls.style.display = 'none';
+        calculateDayCare();
+      }
+    }
+
+    // --- GESTIÓN DE LA POKÉDEX ---
+    function saveState() {
+      localStorage.setItem('pkmn_caught_rf_ids', JSON.stringify(Array.from(caughtSet)));
+      updateStats();
+    }
+
+    function updateStats() {
+      const count = caughtSet.size;
+      document.getElementById('caught-count').innerText = count;
+      document.getElementById('remaining-count').innerText = 151 - count;
+      document.getElementById('progress-fill').style.width = ((count / 151) * 100) + '%';
+    }
+
+    function toggleConfirmMode() {
+      requireConfirm = !requireConfirm;
+      localStorage.setItem('pkmn_require_confirm', requireConfirm ? 'true' : 'false');
+      const btn = document.getElementById('confirm-toggle');
+      btn.className = 'confirm-toggle-btn ' + (requireConfirm ? 'enabled' : '');
+      btn.innerText = 'Confirmar: ' + (requireConfirm ? 'SÍ' : 'NO');
+    }
+
+    function onCardTouchStart(e) {
+      touchStartY = e.touches[0].clientY;
+      isDragging = false;
+    }
+
+    function onCardTouchMove(e) {
+      if (Math.abs(e.touches[0].clientY - touchStartY) > 7) {
+        isDragging = true;
+      }
+    }
+
+    function handleCardTap(id) {
+      if (isDragging) return;
+
+      const isCaught = caughtSet.has(id);
+      const pk = allUniquePokemon.find(p => p.id === id);
+
+      if (!requireConfirm) {
+        applyToggle(id);
+        return;
+      }
+
+      pendingId = id;
+      pendingAction = isCaught ? 'release' : 'catch';
+
+      const modal = document.getElementById('confirm-modal');
+      const thumb = document.getElementById('m-thumb');
+      const title = document.getElementById('m-title');
+      const desc = document.getElementById('m-desc');
+      const confirmBtn = document.getElementById('m-confirm-btn');
+
+      thumb.src = `${spriteUrl(pk.id)}`;
+      title.innerText = `#${String(pk.id).padStart(3, '0')} ${pk.name}`;
+
+      if (pendingAction === 'catch') {
+        desc.innerText = '¿Deseas marcarlo como ATRAPADO en tu Pokédex?';
+        confirmBtn.className = 'modal-btn confirm-catch';
+        confirmBtn.innerText = 'Marcar atrapado';
+      } else {
+        desc.innerText = '¿Deseas DESMARCAR este Pokémon de tu Pokédex?';
+        confirmBtn.className = 'modal-btn confirm-release';
+        confirmBtn.innerText = 'Desmarcar';
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('confirm-modal').classList.remove('active');
+      pendingId = null;
+      pendingAction = null;
+    }
+
+    function executeConfirmedAction() {
+      if (pendingId !== null) {
+        applyToggle(pendingId);
+      }
+      closeModal();
+    }
+
+    function applyToggle(id) {
+      if (caughtSet.has(id)) {
+        caughtSet.delete(id);
+      } else {
+        caughtSet.add(id);
+      }
+      saveState();
+      handleFilterAndSort();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`filter-${filter}`).classList.add('active');
+      handleFilterAndSort();
+    }
+
+    function getCardHtml(p) {
+      const isCaught = caughtSet.has(p.id);
+      const typesHtml = p.types.map(t => `<span class="type-badge t-${t}">${t}</span>`).join(' ');
+      return `
+        <div class="pokemon-card ${isCaught ? 'caught' : ''}"
+             ontouchstart="onCardTouchStart(event)"
+             ontouchmove="onCardTouchMove(event)"
+             onclick="handleCardTap(${p.id})">
+          <div class="pk-info-left">
+            <span class="pk-num">#${String(p.id).padStart(3, '0')}</span>
+            <img class="pk-thumb" src="${spriteUrl(p.id)}" alt="${p.name}" loading="lazy">
+            <div class="pk-details">
+              <div class="pk-name-row">
+                <span class="pk-name">${p.name}</span>
+                ${typesHtml}
+              </div>
+              ${p.note ? `<span class="pk-subtext">${p.note}</span>` : ''}
+            </div>
+          </div>
+          <div class="pokeball-btn"></div>
+        </div>
+      `;
+    }
+
+    function handleFilterAndSort() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const sortMode = document.getElementById('sort-select').value;
+      const container = document.getElementById('view-pokedex');
+
+      const matchesFilter = (id) => {
+        const isCaught = caughtSet.has(id);
+        if (currentFilter === 'missing') return !isCaught;
+        if (currentFilter === 'caught') return isCaught;
+        return true;
+      };
+
+      const matchesQuery = (p) => {
+        if (!query) return true;
+        const matchesName = p.name.toLowerCase().includes(query);
+        const matchesNum = String(p.id).includes(query);
+        const matchesType = p.types.some(t => t.includes(query));
+        return matchesName || matchesNum || matchesType;
+      };
+
+      if (sortMode === 'story') {
+        let html = '';
+        zonesData.forEach((zoneObj) => {
+          const visiblePk = zoneObj.pokemon.filter(p => matchesFilter(p.id) && matchesQuery(p));
+          if (visiblePk.length > 0) {
+            const caughtInZone = zoneObj.pokemon.filter(p => caughtSet.has(p.id)).length;
+            html += `
+              <div class="zone-section">
+                <div class="zone-header">
+                  <span>${zoneObj.zone}</span>
+                  <span class="zone-count">${caughtInZone}/${zoneObj.pokemon.length}</span>
+                </div>
+                <div class="pokemon-list">
+                  ${visiblePk.map(p => getCardHtml(p)).join('')}
+                </div>
+              </div>
+            `;
+          }
+        });
+        container.innerHTML = html ? (html + '<button class="reset-btn" onclick="resetProgress()">Reiniciar progreso guardado</button>') : '<p style="text-align:center; color:#8b949e; margin-top:30px;">No se encontraron Pokémon.</p>';
+      } else {
+        let sortedList = [...allUniquePokemon].filter(p => matchesFilter(p.id) && matchesQuery(p));
+
+        if (sortMode === 'number') {
+          sortedList.sort((a, b) => a.id - b.id);
+        } else if (sortMode === 'name') {
+          sortedList.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortMode === 'type') {
+          sortedList.sort((a, b) => a.types[0].localeCompare(b.types[0]));
+        }
+
+        container.innerHTML = `
+          <div class="zone-section" style="margin-top:4px;">
+            <div class="pokemon-list">
+              ${sortedList.map(p => getCardHtml(p)).join('')}
+            </div>
+            <button class="reset-btn" onclick="resetProgress()">Reiniciar progreso guardado</button>
+          </div>
+        `;
+      }
+
+      updateStats();
+    }
+
+    function resetProgress() {
+      if (confirm("¿Estás seguro de que deseas reiniciar todos los Pokémon marcados?")) {
+        caughtSet.clear();
+        saveState();
+        handleFilterAndSort();
+      }
+    }
+
+    // --- MATEMÁTICA Y CALCULADORA DE GUARDERÍA ---
+    // Fórmulas oficiales de Experiencia Gen III
+    function getExpAtLevel(level, curve) {
+      const n = level;
+      if (n <= 1) return 0;
+      if (curve === 'fast') {
+        return Math.floor(0.8 * Math.pow(n, 3));
+      } else if (curve === 'medium_fast') {
+        return Math.pow(n, 3);
+      } else if (curve === 'medium_slow') {
+        return Math.floor(1.2 * Math.pow(n, 3) - 15 * Math.pow(n, 2) + 100 * n - 140);
+      } else if (curve === 'slow') {
+        return Math.floor(1.25 * Math.pow(n, 3));
+      }
+      return Math.pow(n, 3);
+    }
+
+    function getCurveNameSpanish(curve) {
+      if (curve === 'fast') return 'Rápida (800,000 Exp)';
+      if (curve === 'medium_fast') return 'Media Rápida (1,000,000 Exp)';
+      if (curve === 'medium_slow') return 'Media Lenta (1,059,860 Exp)';
+      if (curve === 'slow') return 'Lenta (1,250,000 Exp)';
+      return curve;
+    }
+
+    function initDayCareSelect() {
+      const sel = document.getElementById('calc-select-pk');
+      sel.innerHTML = allUniquePokemon.map(p => 
+        `<option value="${p.id}" ${p.id === 21 ? 'selected' : ''}>#${String(p.id).padStart(3, '0')} ${p.name}</option>`
+      ).join('');
+      onSelectPokemonChange();
+    }
+
+    function onSelectPokemonChange() {
+      const id = parseInt(document.getElementById('calc-select-pk').value);
+      const pk = allUniquePokemon.find(p => p.id === id);
+      if (!pk) return;
+
+      document.getElementById('calc-preview-img').src = `${spriteUrl(pk.id)}`;
+      document.getElementById('calc-preview-name').innerText = `#${String(pk.id).padStart(3, '0')} ${pk.name}`;
+      document.getElementById('calc-preview-types').innerHTML = pk.types.map(t => `<span class="type-badge t-${t}">${t}</span>`).join(' ');
+      document.getElementById('calc-preview-curve').innerText = 'Curva: ' + getCurveNameSpanish(pk.growth);
+      document.getElementById('calc-preview-note').innerText = pk.note || '';
+
+      onCurrentLevelChanged();
+    }
+
+    function onCurrentLevelChanged() {
+      let curLvl = parseInt(document.getElementById('calc-cur-level').value) || 1;
+      if (curLvl < 1) curLvl = 1;
+      if (curLvl > 99) curLvl = 99;
+      document.getElementById('calc-cur-level').value = curLvl;
+
+      const targetInput = document.getElementById('calc-target-level');
+      let targetLvl = parseInt(targetInput.value) || (curLvl + 1);
+      if (targetLvl <= curLvl) {
+        targetLvl = Math.min(100, curLvl + 1);
+        targetInput.value = targetLvl;
+      }
+      targetInput.min = curLvl + 1;
+
+      // Poner por defecto los puntos de nivel completo
+      const id = parseInt(document.getElementById('calc-select-pk').value);
+      const pk = allUniquePokemon.find(p => p.id === id);
+      const fullLvlCost = getExpAtLevel(curLvl + 1, pk.growth) - getExpAtLevel(curLvl, pk.growth);
+      
+      const ptsInput = document.getElementById('calc-pts-remaining');
+      // Si el Pokémon seleccionado es Spearow (id 21) y nivel 18, poner el ejemplo exacto de la foto (10 puntos)
+      if (pk.id === 21 && curLvl === 18) {
+        ptsInput.value = 10;
+      } else {
+        ptsInput.value = fullLvlCost;
+      }
+
+      document.getElementById('lbl-pts-remaining').innerText = `Puntos que faltan para el Nv. ${curLvl + 1} (Máx: ${fullLvlCost}):`;
+
+      calculateDayCare();
+    }
+
+    function calculateDayCare() {
+      const id = parseInt(document.getElementById('calc-select-pk').value);
+      const pk = allUniquePokemon.find(p => p.id === id);
+      if (!pk) return;
+
+      const curLvl = parseInt(document.getElementById('calc-cur-level').value) || 1;
+      let targetLvl = parseInt(document.getElementById('calc-target-level').value) || (curLvl + 1);
+      if (targetLvl <= curLvl) targetLvl = curLvl + 1;
+      if (targetLvl > 100) targetLvl = 100;
+
+      const expCurBase = getExpAtLevel(curLvl, pk.growth);
+      const expNextBase = getExpAtLevel(curLvl + 1, pk.growth);
+      const maxDiffToNext = expNextBase - expCurBase;
+
+      let ptsRemInput = document.getElementById('calc-pts-remaining').value;
+      let ptsRem = parseInt(ptsRemInput);
+      if (isNaN(ptsRem) || ptsRem < 0) ptsRem = maxDiffToNext;
+      if (ptsRem > maxDiffToNext) ptsRem = maxDiffToNext;
+
+      // Experiencia acumulada actual del pokemon
+      const currentAccumulatedExp = expNextBase - ptsRem;
+
+      // Experiencia total requerida al nivel deseado
+      const targetExp = getExpAtLevel(targetLvl, pk.growth);
+
+      // Puntos / Pasos necesarios
+      const neededSteps = Math.max(0, targetExp - currentAccumulatedExp);
+
+      // Niveles ganados
+      const levelsGained = targetLvl - curLvl;
+
+      // Coste en la Guardería de Kanto: 100 base + 100 por cada nivel subido
+      const cost = levelsGained > 0 ? (100 + (levelsGained * 100)) : 0;
+
+      // Tiempo estimado:
+      // Bicicleta en Rojo Fuego: ~8.6 pasos por segundo
+      // Caminando: ~4.3 pasos por segundo
+      const secBike = Math.round(neededSteps / 8.6);
+      const minBike = (secBike / 60).toFixed(1);
+
+      const secWalk = Math.round(neededSteps / 4.3);
+      const minWalk = (secWalk / 60).toFixed(1);
+
+      // Mostrar en pantalla
+      document.getElementById('res-steps').innerText = neededSteps.toLocaleString();
+      document.getElementById('res-cost').innerText = cost.toLocaleString() + ' ₽';
+      document.getElementById('res-levels-gained').innerText = '+' + levelsGained + ' Nv.';
+      document.getElementById('res-time-bike').innerText = (minBike < 1 ? (secBike + ' seg') : (minBike + ' min'));
+      document.getElementById('res-time-walk').innerText = (minWalk < 1 ? (secWalk + ' seg') : (minWalk + ' min'));
+
+      // Verificar si hay evolución de por medio
+      const evoWarn = document.getElementById('res-evolution-warning');
+      const note = pk.note || '';
+      const match = note.match(/Nivel\s+(\d+)/i) || note.match(/Nv\.\s*(\d+)/i);
+      if (match) {
+        const evoLevel = parseInt(match[1]);
+        if (curLvl < evoLevel && targetLvl >= evoLevel) {
+          evoWarn.style.display = 'flex';
+          evoWarn.innerHTML = `⚠️ <strong>¡Aviso de Evolución!</strong> ${pk.name} evoluciona al nivel ${evoLevel}. Como la Guardería no activa evoluciones, al retirarlo sube 1 combate para que evolucione.`;
+        } else {
+          evoWarn.style.display = 'none';
+        }
+      } else {
+        evoWarn.style.display = 'none';
+      }
+    }
+
+    // Sincronizar botón de confirmación con estado inicial
+    const cBtn = document.getElementById('confirm-toggle');
+    cBtn.className = 'confirm-toggle-btn ' + (requireConfirm ? 'enabled' : '');
+    cBtn.innerText = 'Confirmar: ' + (requireConfirm ? 'SÍ' : 'NO');
+
+    // Inicializar ambas partes
+    handleFilterAndSort();
+    initDayCareSelect();
+    switchTab(activeTab);
+  </script>
+
+  <script>
+    // ===== Sincronización, respaldo y service worker =====
+    const SUPA_URL = "https://ukrkacxhovhadgtblfjv.supabase.co";
+    const SUPA_KEY = "sb_publishable_bAJH-4igYl8asM4hS0Kf3A_XHS6kw8i";
+    const LS_META = 'pkmn_meta';
+    const LS_CODE = 'pkmn_sync_code';
+
+    let meta = {};
+    try { meta = JSON.parse(localStorage.getItem(LS_META) || '{}'); } catch (e) { meta = {}; }
+    // Pokémon ya marcados antes de existir la sincronización: marca de tiempo mínima
+    caughtSet.forEach(id => { if (!meta[id]) meta[id] = { c: 1, t: 1 }; });
+
+    function saveMeta() { localStorage.setItem(LS_META, JSON.stringify(meta)); }
+    saveMeta();
+
+    // Sustituye el cambio de estado para registrar cuándo se hizo
+    applyToggle = function (id) {
+      const nowCaught = !caughtSet.has(id);
+      if (nowCaught) caughtSet.add(id); else caughtSet.delete(id);
+      meta[id] = { c: nowCaught ? 1 : 0, t: Date.now() };
+      saveMeta();
+      saveState();
+      handleFilterAndSort();
+      scheduleSync();
+    };
+
+    resetProgress = function () {
+      if (confirm("¿Estás seguro de que deseas reiniciar todos los Pokémon marcados?")) {
+        const t = Date.now();
+        caughtSet.forEach(id => { meta[id] = { c: 0, t }; });
+        caughtSet.clear();
+        saveMeta();
+        saveState();
+        handleFilterAndSort();
+        scheduleSync();
+      }
+    };
+
+    function applyMetaToSet() {
+      caughtSet.clear();
+      Object.keys(meta).forEach(k => { if (meta[k].c === 1) caughtSet.add(parseInt(k)); });
+      saveState();
+      handleFilterAndSort();
+    }
+
+    function mergeMeta(remote) {
+      let changed = false;
+      Object.keys(remote || {}).forEach(k => {
+        const r = remote[k];
+        if (!r || typeof r.t !== 'number') return;
+        const l = meta[k];
+        if (!l || r.t > l.t) { meta[k] = { c: r.c ? 1 : 0, t: r.t }; changed = true; }
+      });
+      return changed;
+    }
+
+    // ---- Supabase (solo funciones RPC; la tabla no es accesible directamente) ----
+    async function rpc(fn, body) {
+      const res = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
+    }
+
+    function setDot(state) {
+      const d = document.getElementById('sync-dot');
+      d.className = 'sync-dot ' + (state || '');
+    }
+    function setStatus(msg) {
+      const s = document.getElementById('sync-status');
+      if (s) s.innerText = msg || '';
+    }
+
+    let syncing = false, syncTimer = null;
+    function scheduleSync() {
+      if (!localStorage.getItem(LS_CODE)) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => syncNow(false), 1500);
+    }
+
+    async function syncNow(manual) {
+      const code = localStorage.getItem(LS_CODE);
+      if (!code || syncing) return;
+      if (!navigator.onLine) { setDot('err'); if (manual) setStatus('Sin conexión. Se sincronizará al volver internet.'); return; }
+      syncing = true; setDot('busy'); if (manual) setStatus('Sincronizando…');
+      try {
+        const remote = await rpc('pokedex_get', { p_code: code });
+        const remoteMeta = (remote && remote.meta) || {};
+        const changedLocal = mergeMeta(remoteMeta);
+        if (changedLocal) { saveMeta(); applyMetaToSet(); }
+        // ¿Hay algo local más nuevo que lo remoto? Subir el resultado mezclado
+        const needPush = Object.keys(meta).some(k => !remoteMeta[k] || remoteMeta[k].t !== meta[k].t || remoteMeta[k].c !== meta[k].c);
+        if (needPush) await rpc('pokedex_put', { p_code: code, p_data: { meta, v: 1 } });
+        setDot('ok');
+        setStatus('Sincronizado ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } catch (e) {
+        setDot('err');
+        setStatus('No se pudo sincronizar. Reintenta más tarde.');
+      } finally { syncing = false; }
+    }
+
+    function randomCode() {
+      const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+      const arr = new Uint8Array(24);
+      crypto.getRandomValues(arr);
+      let s = '';
+      arr.forEach(b => s += abc[b % abc.length]);
+      return s.match(/.{1,6}/g).join('-');
+    }
+
+    function refreshSyncUi() {
+      const code = localStorage.getItem(LS_CODE);
+      document.getElementById('sync-off').style.display = code ? 'none' : 'block';
+      document.getElementById('sync-on').style.display = code ? 'block' : 'none';
+      document.getElementById('sync-code-show').innerText = code || '';
+      if (!code) setDot('');
+    }
+
+    async function createSyncCode() {
+      const code = randomCode();
+      localStorage.setItem(LS_CODE, code);
+      refreshSyncUi();
+      await syncNow(true);
+    }
+
+    async function joinSyncCode() {
+      const code = document.getElementById('join-code').value.trim().toLowerCase();
+      if (code.length < 16) { setStatus('El código parece incompleto.'); return; }
+      localStorage.setItem(LS_CODE, code);
+      refreshSyncUi();
+      await syncNow(true);
+    }
+
+    function disableSync() {
+      if (confirm('¿Desactivar la sincronización en este dispositivo? Tu progreso local se conserva.')) {
+        localStorage.removeItem(LS_CODE);
+        refreshSyncUi();
+        setStatus('');
+      }
+    }
+
+    async function copySyncCode() {
+      const code = localStorage.getItem(LS_CODE) || '';
+      try { await navigator.clipboard.writeText(code); setStatus('Código copiado.'); }
+      catch (e) { setStatus('Mantén presionado el código para copiarlo.'); }
+    }
+
+    function openSettings() { refreshSyncUi(); document.getElementById('settings-modal').classList.add('active'); }
+    function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+
+    // ---- Respaldo manual ----
+    function exportBackup() {
+      const data = { app: 'pokedex-rojo-fuego', v: 1, exported: new Date().toISOString(), caught: Array.from(caughtSet).sort((a, b) => a - b), meta };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pokedex-respaldo-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setStatus('Respaldo exportado.');
+    }
+
+    function importBackup(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const d = JSON.parse(reader.result);
+          if (d.app !== 'pokedex-rojo-fuego') throw new Error('formato');
+          const t = Date.now();
+          const ids = new Set((d.caught || []).map(Number).filter(n => n >= 1 && n <= 151));
+          // El archivo manda: lo que trae queda como atrapado, lo demás desmarcado
+          for (let i = 1; i <= 151; i++) meta[i] = { c: ids.has(i) ? 1 : 0, t };
+          saveMeta(); applyMetaToSet(); scheduleSync();
+          setStatus('Respaldo importado: ' + ids.size + ' Pokémon atrapados.');
+        } catch (e) { setStatus('El archivo no es un respaldo válido.'); }
+      };
+      reader.readAsText(file);
+    }
+
+    // ---- Sincronizar al abrir, al volver a la app y al recuperar internet ----
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(false); });
+    window.addEventListener('online', () => syncNow(false));
+    if (localStorage.getItem(LS_CODE)) syncNow(false);
+
+    // ---- Service worker (modo offline) ----
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+    }
+  </script>
+</body>
+</html>
