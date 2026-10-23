@@ -1,4 +1,4 @@
-const CACHE = 'pokedex-rf-v2';
+const CACHE = 'pokedex-rf-v3';
 const ASSETS = ["./", "index.html", "sprites.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener('install', (e) => {

@@ -750,7 +750,7 @@
         <div class="grid-2">
           <div class="form-group">
             <label for="calc-cur-level">Nivel Actual:</label>
-            <input type="number" id="calc-cur-level" class="form-input" min="1" max="99" value="18" oninput="onCurrentLevelChanged()">
+            <input type="number" id="calc-cur-level" class="form-input" min="1" max="99" value="18" oninput="onCurrentLevelChanged(false)" onchange="onCurrentLevelChanged(true)">
           </div>
 
           <div class="form-group">
@@ -1303,18 +1303,28 @@
       document.getElementById('calc-preview-curve').innerText = 'Curva: ' + getCurveNameSpanish(pk.growth);
       document.getElementById('calc-preview-note').innerText = pk.note || '';
 
-      onCurrentLevelChanged();
+      onCurrentLevelChanged(true);
     }
 
-    function onCurrentLevelChanged() {
-      let curLvl = parseInt(document.getElementById('calc-cur-level').value) || 1;
-      if (curLvl < 1) curLvl = 1;
-      if (curLvl > 99) curLvl = 99;
-      document.getElementById('calc-cur-level').value = curLvl;
+    function onCurrentLevelChanged(finalize) {
+      // finalize = true cuando se sale del campo o cambia el Pokémon; false mientras se escribe.
+      const curInput = document.getElementById('calc-cur-level');
+      let curLvl = parseInt(curInput.value);
+      if (isNaN(curLvl) || curLvl < 1) {
+        // Mientras se escribe se permite dejar el campo vacío; al salir se restaura a 1.
+        if (!finalize) return;
+        curLvl = 1;
+        curInput.value = curLvl;
+      }
+      if (curLvl > 99) {
+        curLvl = 99;
+        curInput.value = curLvl;
+      }
 
       const targetInput = document.getElementById('calc-target-level');
-      let targetLvl = parseInt(targetInput.value) || (curLvl + 1);
-      if (targetLvl <= curLvl) {
+      let targetLvl = parseInt(targetInput.value);
+      // El nivel deseado solo se corrige al terminar de escribir, para no pisar lo que se teclea.
+      if (finalize && (isNaN(targetLvl) || targetLvl <= curLvl)) {
         targetLvl = Math.min(100, curLvl + 1);
         targetInput.value = targetLvl;
       }
@@ -1336,6 +1346,18 @@
       document.getElementById('lbl-pts-remaining').innerText = `Puntos que faltan para el Nv. ${curLvl + 1} (Máx: ${fullLvlCost}):`;
 
       calculateDayCare();
+    }
+
+    function fmtDuration(sec) {
+      if (sec < 60) return sec + ' seg';
+      const hh = Math.floor(sec / 3600);
+      const mm = Math.floor((sec % 3600) / 60);
+      const ss = sec % 60;
+      const parts = [];
+      if (hh) parts.push(hh + ' h');
+      if (mm) parts.push(mm + ' min');
+      if (ss) parts.push(ss + ' s');
+      return parts.join(' ');
     }
 
     function calculateDayCare() {
@@ -1385,8 +1407,8 @@
       document.getElementById('res-steps').innerText = neededSteps.toLocaleString();
       document.getElementById('res-cost').innerText = cost.toLocaleString() + ' ₽';
       document.getElementById('res-levels-gained').innerText = '+' + levelsGained + ' Nv.';
-      document.getElementById('res-time-bike').innerText = (minBike < 1 ? (secBike + ' seg') : (minBike + ' min'));
-      document.getElementById('res-time-walk').innerText = (minWalk < 1 ? (secWalk + ' seg') : (minWalk + ' min'));
+      document.getElementById('res-time-bike').innerText = fmtDuration(secBike);
+      document.getElementById('res-time-walk').innerText = fmtDuration(secWalk);
 
       // Verificar si hay evolución de por medio
       const evoWarn = document.getElementById('res-evolution-warning');
